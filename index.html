@@ -542,6 +542,19 @@
                 padding: 20px;
                 margin: 10px;
             }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 0.9rem;
+            }
+
+            .para-explanation {
+                font-size: 0.8rem;
+                padding: 10px;
+            }
             
             .task-input-row {
                 flex-direction: column;
@@ -550,6 +563,120 @@
             
             #para-select {
                 min-width: auto;
+            }
+
+            .sidebar {
+                padding: 20px;
+            }
+
+            .para-category {
+                padding: 12px;
+            }
+
+            .para-item {
+                padding: 12px;
+            }
+
+            .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 16px;
+            }
+
+            .task-content {
+                margin-right: 0;
+                margin-bottom: 10px;
+                width: 100%;
+            }
+
+            .task-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .delete-task-btn {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+
+            .add-para-btn {
+                width: 100%;
+            }
+
+            .add-para-form {
+                flex-direction: column;
+            }
+
+            .add-para-input, .add-para-select {
+                width: 100%;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .stat-number {
+                font-size: 20px;
+            }
+
+            .stat-label {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+                margin: 5px;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .main-area {
+                padding: 20px;
+            }
+
+            .current-category-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .current-category-info h2 {
+                font-size: 1.3rem;
+            }
+
+            .current-category-desc {
+                font-size: 13px;
+            }
+
+            .task-input-section {
+                padding: 15px;
+            }
+
+            #new-task, #para-select, #add-task-btn {
+                padding: 12px;
+                font-size: 15px;
+            }
+
+            .task-text {
+                font-size: 15px;
+            }
+
+            .task-category {
+                font-size: 11px;
+                padding: 3px 10px;
+            }
+
+            .empty-state {
+                font-size: 16px;
+                padding: 40px 10px;
+            }
+
+            .empty-icon {
+                font-size: 40px;
             }
         }
     </style>
@@ -563,6 +690,7 @@
             <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
             <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
             <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+            <link rel="manifest" href="/manifest.json">
             <p class="subtitle">Organize your life</p>
             <div class="para-explanation">
                 <strong>PARA Method:</strong> Projects (specific outcomes with deadlines), Areas (ongoing responsibilities), Resources (future reference topics), Archive (inactive items from other categories)
@@ -1041,6 +1169,19 @@
 
     // Initialize application
     initAuth();
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        });
+    }
 });
 
     async function toggleTaskCompletion(taskId) {
