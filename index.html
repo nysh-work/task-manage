@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nishanth's Task Manager</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 1200px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .para-explanation {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 32px;
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 32px;
+            align-items: start;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f1f5f9;
+        }
+
+        .sidebar h3 {
+            color: #2d3748;
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .para-categories {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .para-category {
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+        .para-category.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .para-category:hover {
+            background: #f8fafc;
+        }
+
+        .para-category.projects { background: linear-gradient(135deg, #e53e3e, #fc8181); color: white; }
+        .para-category.areas { background: linear-gradient(135deg, #38a169, #68d391); color: white; }
+        .para-category.resources { background: linear-gradient(135deg, #3182ce, #63b3ed); color: white; }
+        .para-category.archive { background: linear-gradient(135deg, #805ad5, #b794f6); color: white; }
+
+        .para-category.active.projects { background: linear-gradient(135deg, #e53e3e, #fc8181); opacity: 0.9; }
+        .para-category.active.areas { background: linear-gradient(135deg, #38a169, #68d391); opacity: 0.9; }
+        .para-category.active.resources { background: linear-gradient(135deg, #3182ce, #63b3ed); opacity: 0.9; }
+        .para-category.active.archive { background: linear-gradient(135deg, #805ad5, #b794f6); opacity: 0.9; }
+
+        .category-icon {
+            font-size: 18px;
+        }
+
+        .category-info {
+            flex-grow: 1;
+        }
+
+        .category-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .category-description {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .category-count {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .add-para-section {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+
+        .add-para-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .add-para-input {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .add-para-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .add-para-select {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+        }
+
+        .add-para-btn {
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-para-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .main-area {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f1f5f9;
+        }
+
+        .current-category-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .current-category-icon {
+            font-size: 24px;
+        }
+
+        .current-category-info h2 {
+            color: #2d3748;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .current-category-desc {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .task-input-container {
+            margin-bottom: 32px;
+        }
+
+        .task-input-section {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .task-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .task-input-row {
+            display: flex;
+            gap: 16px;
+            align-items: end;
+        }
+
+        .task-input-field {
+            flex-grow: 1;
+        }
+
+        .task-input-field label {
+            display: block;
+            color: #4a5568;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        #new-task {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            outline: none;
+            transition: all 0.3s ease;
+            background: white;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        #new-task:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        #para-select {
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+            font-size: 16px;
+            font-weight: 500;
+            color: #2d3748;
+            outline: none;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        #add-task-btn {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+            white-space: nowrap;
+        }
+
+        #add-task-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .para-items-section {
+            margin-bottom: 32px;
+        }
+
+        .para-items-list {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .para-item {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .para-item:hover {
+            background: #f1f5f9;
+            transform: translateX(4px);
+        }
+
+        .para-item.projects { border-left-color: #e53e3e; }
+        .para-item.areas { border-left-color: #38a169; }
+        .para-item.resources { border-left-color: #3182ce; }
+        .para-item.archive { border-left-color: #805ad5; }
+
+        .para-item-text {
+            color: #2d3748;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .delete-para-btn {
+            background: #fed7d7;
+            color: #c53030;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .delete-para-btn:hover {
+            background: #feb2b2;
+        }
+
+        #task-list {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #f1f5f9;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        .task-item.projects { border-left-color: #e53e3e; }
+        .task-item.areas { border-left-color: #38a169; }
+        .task-item.resources { border-left-color: #3182ce; }
+        .task-item.archive { border-left-color: #805ad5; }
+
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .task-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+            margin-right: 16px;
+        }
+
+        .task-text {
+            color: #2d3748;
+            font-size: 16px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .task-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .task-category {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .task-category.projects { background: rgba(229, 62, 62, 0.1); color: #e53e3e; }
+        .task-category.areas { background: rgba(56, 161, 105, 0.1); color: #38a169; }
+        .task-category.resources { background: rgba(49, 130, 206, 0.1); color: #3182ce; }
+        .task-category.archive { background: rgba(128, 90, 213, 0.1); color: #805ad5; }
+
+        .delete-task-btn {
+            background: linear-gradient(135deg, #fc8181, #f56565);
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .delete-task-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 101, 101, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0aec0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.6;
+        }
+
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .task-input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            #para-select {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Nishanth's Task Manager</h1>
+            <!-- Favicon links -->
+            <link rel="icon" type="image/svg+xml" href="favicon.svg">
+            <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
+            <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
+            <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
+            <p class="subtitle">Organize your life</p>
+            <div class="para-explanation">
+                <strong>PARA Method:</strong> Projects (specific outcomes with deadlines), Areas (ongoing responsibilities), Resources (future reference topics), Archive (inactive items from other categories)
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>PARA Categories</h3>
+                <div class="para-categories">
+                    <div class="para-category projects active" data-category="projects">
+                        <span class="category-icon">🎯</span>
+                        <div class="category-info">
+                            <div class="category-name">Projects</div>
+                            <div class="category-description">Specific outcomes with deadlines</div>
+                        </div>
+                        <span class="category-count" id="projects-count">0</span>
+                    </div>
+                    <div class="para-category areas" data-category="areas">
+                        <span class="category-icon">🏠</span>
+                        <div class="category-info">
+                            <div class="category-name">Areas</div>
+                            <div class="category-description">Ongoing responsibilities</div>
+                        </div>
+                        <span class="category-count" id="areas-count">0</span>
+                    </div>
+                    <div class="para-category resources" data-category="resources">
+                        <span class="category-icon">📚</span>
+                        <div class="category-info">
+                            <div class="category-name">Resources</div>
+                            <div class="category-description">Future reference topics</div>
+                        </div>
+                        <span class="category-count" id="resources-count">0</span>
+                    </div>
+                    <div class="para-category archive" data-category="archive">
+                        <span class="category-icon">📦</span>
+                        <div class="category-info">
+                            <div class="category-name">Archive</div>
+                            <div class="category-description">Inactive items</div>
+                        </div>
+                        <span class="category-count" id="archive-count">0</span>
+                    </div>
+                </div>
+
+                <div class="add-para-section">
+                    <h3>Add PARA Item</h3>
+                    <div class="add-para-form">
+                        <input type="text" id="para-item-input" class="add-para-input" placeholder="Enter project, area, resource, or archive item">
+                        <select id="para-category-select" class="add-para-select">
+                            <option value="projects">Project</option>
+                            <option value="areas">Area</option>
+                            <option value="resources">Resource</option>
+                            <option value="archive">Archive</option>
+                        </select>
+                        <button id="add-para-btn" class="add-para-btn">Add PARA Item</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-area">
+                <div class="current-category-header">
+                    <span class="current-category-icon" id="current-icon">🎯</span>
+                    <div class="current-category-info">
+                        <h2 id="current-category-title">Projects</h2>
+                        <p class="current-category-desc" id="current-category-desc">Specific outcomes with deadlines</p>
+                    </div>
+                </div>
+
+                <div class="stats-section">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-tasks">0</div>
+                        <div class="stat-label">Total Tasks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="current-category-tasks">0</div>
+                        <div class="stat-label">Current Category Tasks</div>
+                    </div>
+                </div>
+
+                <div class="para-items-section">
+                    <h3>PARA Items in Current Category</h3>
+                    <div class="para-items-list" id="para-items-list"></div>
+                </div>
+
+                <div class="task-input-container">
+                    <div class="task-input-section">
+                        <div class="task-form">
+                            <div class="task-input-row">
+                                <div class="task-input-field">
+                                    <label for="new-task">Task Description</label>
+                                    <input type="text" id="new-task" placeholder="What needs to be done?">
+                                </div>
+                                <select id="para-select">
+                                    <option value="projects">Project</option>
+                                    <option value="areas">Area</option>
+                                    <option value="resources">Resource</option>
+                                    <option value="archive">Archive</option>
+                                </select>
+                                <button id="add-task-btn">Add Task</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <ul id="task-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://axukwdfhbexiitblsdhw.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4dWt3ZGZoYmV4aWl0YmxzZGh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ2MjAzNzIsImV4cCI6MjA2MDE5NjM3Mn0.DsrEN7fNyxRJJIQVHD8pu8zjOp4lGo2SU91zvyew-8U';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // State management
+    let tasks = [];
+    let paraItems = {
+        projects: [],
+        areas: [],
+        resources: [],
+        archive: []
+    };
+    let currentCategory = 'projects';
+    let currentUser = null;
+    
+    // Category configurations
+    const categoryConfig = {
+        projects: {
+            icon: '🎯',
+            title: 'Projects',
+            description: 'Specific outcomes with deadlines',
+            color: '#e53e3e'
+        },
+        areas: {
+            icon: '🏠',
+            title: 'Areas',
+            description: 'Ongoing responsibilities to maintain',
+            color: '#38a169'
+        },
+        resources: {
+            icon: '📚',
+            title: 'Resources',
+            description: 'Topics or themes of ongoing interest',
+            color: '#3182ce'
+        },
+        archive: {
+            icon: '📦',
+            title: 'Archive',
+            description: 'Inactive items from other categories',
+            color: '#805ad5'
+        }
+    };
+
+    // DOM elements
+    const taskInput = document.getElementById('new-task');
+    const addTaskBtn = document.getElementById('add-task-btn');
+    const paraSelect = document.getElementById('para-select');
+    const taskList = document.getElementById('task-list');
+    const paraCategories = document.querySelectorAll('.para-category');
+    const paraItemInput = document.getElementById('para-item-input');
+    const paraCategorySelect = document.getElementById('para-category-select');
+    const addParaBtn = document.getElementById('add-para-btn');
+    const paraItemsList = document.getElementById('para-items-list');
+
+    // Initialize authentication
+    async function initAuth() {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+            currentUser = session.user;
+            await loadData();
+        } else {
+            await signInAnonymously();
+        }
+    }
+
+    // Anonymous sign-in for simplicity (you can replace with email/password later)
+    async function signInAnonymously() {
+        const { data, error } = await supabase.auth.signInAnonymously();
+        
+        if (error) {
+            console.error('Authentication error:', error);
+            alert('Authentication failed. Please refresh the page.');
+            return;
+        }
+        
+        currentUser = data.user;
+        await loadData();
+    }
+
+    // Load data from Supabase
+    async function loadData() {
+        try {
+            // Load tasks
+            const { data: tasksData, error: tasksError } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+            
+            if (tasksError) throw tasksError;
+            tasks = tasksData || [];
+
+            // Load PARA items
+            const { data: paraData, error: paraError } = await supabase
+                .from('para_items')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
+            
+            if (paraError) throw paraError;
+            
+            // Organize PARA items by category
+            paraItems = {
+                projects: [],
+                areas: [],
+                resources: [],
+                archive: []
+            };
+            
+            if (paraData) {
+                paraData.forEach(item => {
+                    if (paraItems[item.category]) {
+                        paraItems[item.category].push(item);
+                    }
+                });
+            }
+
+            // Render everything
+            renderTasks();
+            renderParaItems();
+            updateStats();
+            updateCategoryCounts();
+            
+        } catch (error) {
+            console.error('Error loading data:', error);
+            alert('Failed to load data. Please refresh the page.');
+        }
+    }
+
+    // Save task to Supabase
+    async function saveTask(task) {
+        try {
+            const { error } = await supabase
+                .from('tasks')
+                .insert([{
+                    id: task.id,
+                    text: task.text,
+                    category: task.category,
+                    completed: task.completed,
+                    user_id: currentUser.id,
+                    created_at: task.createdAt.toISOString()
+                }]);
+            
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error saving task:', error);
+            alert('Failed to save task. Please try again.');
+        }
+    }
+
+    // Save PARA item to Supabase
+    async function saveParaItem(paraItem) {
+        try {
+            const { error } = await supabase
+                .from('para_items')
+                .insert([{
+                    id: paraItem.id,
+                    text: paraItem.text,
+                    category: paraItem.category,
+                    user_id: currentUser.id,
+                    created_at: paraItem.createdAt.toISOString()
+                }]);
+            
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error saving PARA item:', error);
+            alert('Failed to save PARA item. Please try again.');
+        }
+    }
+
+    // Event listeners
+    addTaskBtn.addEventListener('click', addTask);
+    taskInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') addTask();
+    });
+
+    addParaBtn.addEventListener('click', addParaItem);
+    paraItemInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') addParaItem();
+    });
+
+    paraCategories.forEach(category => {
+        category.addEventListener('click', function() {
+            switchCategory(this.dataset.category);
+        });
+    });
+
+    // Functions
+    async function addTask() {
+        const taskText = taskInput.value.trim();
+        const category = paraSelect.value;
+        
+        if (taskText && currentUser) {
+            const task = {
+                id: Date.now().toString(),
+                text: taskText,
+                category: category,
+                completed: false,
+                createdAt: new Date()
+            };
+            
+            tasks.push(task);
+            taskInput.value = '';
+            
+            // Save to Supabase
+            await saveTask(task);
+            
+            renderTasks();
+            updateStats();
+        }
+    }
+
+    async function addParaItem() {
+        const itemText = paraItemInput.value.trim();
+        const category = paraCategorySelect.value;
+        
+        if (itemText && currentUser) {
+            const paraItem = {
+                id: Date.now().toString(),
+                text: itemText,
+                category: category,
+                createdAt: new Date()
+            };
+            
+            paraItems[category].push(paraItem);
+            paraItemInput.value = '';
+            
+            // Save to Supabase
+            await saveParaItem(paraItem);
+            
+            renderParaItems();
+            updateCategoryCounts();
+        }
+    }
+
+    async function deleteTask(taskId) {
+        try {
+            const { error } = await supabase
+                .from('tasks')
+                .delete()
+                .eq('id', taskId)
+                .eq('user_id', currentUser.id);
+            
+            if (error) throw error;
+            
+            tasks = tasks.filter(task => task.id !== taskId);
+            renderTasks();
+            updateStats();
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            alert('Failed to delete task. Please try again.');
+        }
+    }
+
+    async function deleteParaItem(itemId, category) {
+        try {
+            const { error } = await supabase
+                .from('para_items')
+                .delete()
+                .eq('id', itemId)
+                .eq('user_id', currentUser.id);
+            
+            if (error) throw error;
+            
+            paraItems[category] = paraItems[category].filter(item => item.id !== itemId);
+            renderParaItems();
+            updateCategoryCounts();
+        } catch (error) {
+            console.error('Error deleting PARA item:', error);
+            alert('Failed to delete PARA item. Please try again.');
+        }
+    }
+
+    function switchCategory(category) {
+        currentCategory = category;
+        
+        // Update active category
+        paraCategories.forEach(cat => cat.classList.remove('active'));
+        document.querySelector(`[data-category="${category}"]`).classList.add('active');
+        
+        // Update header
+        const config = categoryConfig[category];
+        document.getElementById('current-icon').textContent = config.icon;
+        document.getElementById('current-category-title').textContent = config.title;
+        document.getElementById('current-category-desc').textContent = config.description;
+        
+        // Update select default
+        paraSelect.value = category;
+        
+        renderTasks();
+        renderParaItems();
+        updateStats();
+    }
+
+    function renderTasks() {
+        const filteredTasks = tasks.filter(task => task.category === currentCategory);
+        
+        if (filteredTasks.length === 0) {
+            taskList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">${categoryConfig[currentCategory].icon}</div>
+                    <div>No tasks in ${categoryConfig[currentCategory].title.toLowerCase()} yet. Add one above!</div>
+                </div>
+            `;
+            return;
+        }
+        
+        taskList.innerHTML = filteredTasks.map(task => `
+            <li class="task-item ${task.category}">
+                <div class="task-content">
+                    <div class="task-text">${task.text}</div>
+                    <div class="task-meta">
+                        <span class="task-category ${task.category}">${categoryConfig[task.category].title}</span>
+                    </div>
+                </div>
+                <button class="delete-task-btn" onclick="deleteTask('${task.id}')">Delete</button>
+            </li>
+        `).join('');
+    }
+
+    function renderParaItems() {
+        const items = paraItems[currentCategory];
+        
+        if (items.length === 0) {
+            paraItemsList.innerHTML = `
+                <div class="empty-state" style="padding: 20px;">
+                    <div style="color: #a0aec0; font-size: 14px;">No ${categoryConfig[currentCategory].title.toLowerCase()} items yet</div>
+                </div>
+            `;
+            return;
+        }
+        
+        paraItemsList.innerHTML = items.map(item => `
+            <div class="para-item ${currentCategory}">
+                <span class="para-item-text">${item.text}</span>
+                <button class="delete-para-btn" onclick="deleteParaItem('${item.id}', '${currentCategory}')">Delete</button>
+            </div>
+        `).join('');
+    }
+
+    function updateStats() {
+        const totalTasks = tasks.length;
+        const currentCategoryTaskCount = tasks.filter(task => task.category === currentCategory).length;
+        
+        document.getElementById('total-tasks').textContent = totalTasks;
+        document.getElementById('current-category-tasks').textContent = currentCategoryTaskCount;
+    }
+
+    function updateCategoryCounts() {
+        Object.keys(paraItems).forEach(category => {
+            const count = paraItems[category].length;
+            document.getElementById(`${category}-count`).textContent = count;
+        });
+    }
+
+    // Make functions globally accessible
+    window.deleteTask = deleteTask;
+    window.deleteParaItem = deleteParaItem;
+
+    // Initialize application
+    initAuth();
+});
+    </script>
+</body>
+</html>
