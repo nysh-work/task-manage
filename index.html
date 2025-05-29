@@ -431,6 +431,25 @@
             font-size: 16px;
             font-weight: 500;
             line-height: 1.4;
+            flex-grow: 1;
+        }
+
+        .task-text.completed {
+            text-decoration: line-through;
+            color: #a0aec0;
+        }
+
+        .task-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .task-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
         }
 
         .task-meta {
@@ -967,12 +986,15 @@
         taskList.innerHTML = filteredTasks.map(task => `
             <li class="task-item ${task.category}">
                 <div class="task-content">
-                    <div class="task-text">${task.text}</div>
+                    <div class="task-text ${task.completed ? 'completed' : ''}">${task.text}</div>
                     <div class="task-meta">
                         <span class="task-category ${task.category}">${categoryConfig[task.category].title}</span>
                     </div>
                 </div>
-                <button class="delete-task-btn" onclick="deleteTask('${task.id}')">Delete</button>
+                <div class="task-actions">
+                    <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} onclick="toggleTaskCompletion('${task.id}')">
+                    <button class="delete-task-btn" onclick="deleteTask('${task.id}')">Delete</button>
+                </div>
             </li>
         `).join('');
     }
@@ -1015,10 +1037,31 @@
     // Make functions globally accessible
     window.deleteTask = deleteTask;
     window.deleteParaItem = deleteParaItem;
+    window.toggleTaskCompletion = toggleTaskCompletion;
 
     // Initialize application
     initAuth();
 });
+
+    async function toggleTaskCompletion(taskId) {
+        const taskIndex = tasks.findIndex(task => task.id === taskId);
+        if (taskIndex > -1) {
+            tasks[taskIndex].completed = !tasks[taskIndex].completed;
+            renderTasks();
+            try {
+                const { error } = await supabase
+                    .from('tasks')
+                    .update({ completed: tasks[taskIndex].completed })
+                    .eq('id', taskId)
+                    .eq('user_id', currentUser.id);
+                
+                if (error) throw error;
+            } catch (error) {
+                console.error('Error updating task completion status:', error);
+                alert('Failed to update task status. Please try again.');
+            }
+        }
+    }
     </script>
 </body>
 </html>
